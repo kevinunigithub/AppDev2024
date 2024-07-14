@@ -11,6 +11,7 @@ composeBom = "2024.06.00"
 okhttp = "4.11.0"
 jacksonDatabind = "2.12.5"
 lombok = "1.18.20"
+engageCore = "1.5.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jacksonDatabind" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jacksonDatabind" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
+engage-core = { group = "com.google.android.engage", name = "engage-core", version.ref = "engageCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
