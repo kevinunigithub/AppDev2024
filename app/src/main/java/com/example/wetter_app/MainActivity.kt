@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
+import com.example.wetter_app.UserInterface.WeatherApp
 import com.example.wetter_app.UserInterface.WeatherMainScreen
 
 class MainActivity : ComponentActivity() {
@@ -11,7 +12,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                WeatherMainScreen()
+                WeatherApp()
             }
         }
     }
