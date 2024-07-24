@@ -24,11 +24,11 @@ fun RainRadar() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .height(250.dp)
+            .height(300.dp)
             .background(Color.Transparent)
     ) {
         WebViewComponent(
-            url = "https://www.wetteronline.at/wetterradar/klagenfurt?wry=46.63,14.31&wrn=S2xhZ2VuZnVydA==&wrg=11231&wrx=46.23,13.94&wrm=7.41",
+            url = "https://www.wetteronline.at/wetterradar/klagenfurt?wry=46.63,14.31&wrn=S2xhZ2VuZnVydA==&wrg=11231&wrx=46.54,14.41",
             //vielleicht besser: https://www.rainviewer.com/map.html?loc=46.63,14.31,8&oFa=1&oC=1&oU=1&oCS=0&oF=0&oAP=0&rmt=1&c=1&lp=1&sm=1&sn=1
             modifier = Modifier.align(Alignment.Center)
         )
