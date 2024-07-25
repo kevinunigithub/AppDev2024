@@ -7,11 +7,12 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -23,14 +24,17 @@ fun RainRadar() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .height(300.dp)
+            .fillMaxHeight()
+            .padding(horizontal = 6.dp)
+            .height(600.dp)
             .background(Color.Transparent)
     ) {
         WebViewComponent(
-            url = "https://www.wetteronline.at/wetterradar/klagenfurt?wry=46.63,14.31&wrn=S2xhZ2VuZnVydA==&wrg=11231&wrx=46.54,14.41",
+            url = "https://www.ventusky.com/?p=46.606;14.359;11&l=rain-3h",
             //vielleicht besser: https://www.rainviewer.com/map.html?loc=46.63,14.31,8&oFa=1&oC=1&oU=1&oCS=0&oF=0&oAP=0&rmt=1&c=1&lp=1&sm=1&sn=1
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Transparent)
         )
     }
 }
@@ -45,11 +49,13 @@ fun WebViewComponent(url: String, modifier: Modifier = Modifier) {
                     handler?.proceed()
                 }
             }
+
             settings.javaScriptEnabled = true
-            settings.loadWithOverviewMode = true
-            settings.useWideViewPort = true
-            settings.cacheMode = WebSettings.LOAD_NO_CACHE
             settings.domStorageEnabled = true
+            settings.cacheMode = WebSettings.LOAD_NO_CACHE
+            settings.useWideViewPort = true
+            settings.loadWithOverviewMode = true
+
             loadUrl(url)
         }
     }, modifier = modifier)

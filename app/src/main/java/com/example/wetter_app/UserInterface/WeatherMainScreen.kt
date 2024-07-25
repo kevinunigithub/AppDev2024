@@ -76,11 +76,7 @@ fun WeatherMainScreen(navController: NavHostController) {
     )
 
     val imageHandler = ImageHandler()
-    val (location, setLocation) = remember { mutableStateOf("Klagenfurt") }
     val (currentWeatherIndex, setCurrentWeatherIndex) = remember { mutableStateOf(0) }
-    val (searchResults, setSearchResults) = remember { mutableStateOf(emptyList<String>()) }
-    val (selectedLocation, setSelectedLocation) = remember { mutableStateOf<Pair<Double, Double>?>(null) }
-    val coroutineScope = rememberCoroutineScope()
     val (showDialog, setShowDialog) = remember { mutableStateOf(false) }
 
     val currentWeatherData = weatherDataList[currentWeatherIndex]
@@ -133,39 +129,6 @@ fun WeatherMainScreen(navController: NavHostController) {
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SearchBar(
-                    onSearch = { query ->
-                        coroutineScope.launch {
-                            if (query.equals("My Location", ignoreCase = true)) {
-                                locationData.getCurrentLocationData { lat, lon ->
-                                    setSelectedLocation(lat to lon)
-                                    setLocation("My Location")
-                                }
-                            } else {
-                                val results = locationData.getSearchResults(query)
-                                setSearchResults(results)
-                            }
-                        }
-                    },
-                    searchResults = searchResults,
-                    onSelectResult = { result ->
-                        coroutineScope.launch {
-                            if (result.equals("My Location", ignoreCase = true)) {
-                                locationData.getCurrentLocationData { lat, lon ->
-                                    setSelectedLocation(lat to lon)
-                                    setLocation("My Location")
-                                    // Call on display weather data of location
-                                }
-                            } else {
-                                locationData.getLocationDataOfChosenPlace(result) { lat, lon ->
-                                    setSelectedLocation(lat to lon)
-                                    setLocation(result)
-                                    // Call on display weather data of location
-                                }
-                            }
-                        }
-                    }
-                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -255,55 +218,6 @@ fun WeatherMainScreen(navController: NavHostController) {
 
         if (showDialog) {
             WeatherDetailsDialog(weatherData = currentWeatherData, onDismiss = { setShowDialog(false) })
-        }
-    }
-}
-
-@Composable
-fun SearchBar(
-    onSearch: (query: String) -> Unit,
-    searchResults: List<String>,
-    onSelectResult: (result: String) -> Unit
-) {
-    var text by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        Column {
-            TextField(
-                value = text,
-                onValueChange = {
-                    text = it
-                    expanded = it.isNotEmpty()
-                    onSearch(it)
-                },
-                label = { Text("Search location") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (expanded && searchResults.isNotEmpty()) {
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    searchResults.forEach { result ->
-                        DropdownMenuItem(
-                            onClick = {
-                                text = result
-                                expanded = false
-                                onSelectResult(result)
-                            }
-                        ) {
-                            Text(result)
-                        }
-                    }
-                }
-            }
         }
     }
 }
