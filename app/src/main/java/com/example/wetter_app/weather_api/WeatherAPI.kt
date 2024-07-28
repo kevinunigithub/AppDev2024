@@ -38,6 +38,8 @@ class WeatherAPI {
             client.get("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$long&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m&timezone=auto&forecast_days=1&forecast_hours=24")
                 .body()
         val result = ArrayList<HourlyWeatherHour>()
+
+        //Create Entry for every Hour
         for (i in parsedResult.hourly.time.indices) {
             result.add(
                 HourlyWeatherHour(
@@ -64,6 +66,8 @@ class WeatherAPI {
             client.get("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$long&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&past_days=2")
                 .body()
         val result = ArrayList<DailyWeatherDay>()
+
+        //Create Entry for every Day -> current Day is at index 2
         for (i in parsedResult.daily.time.indices) {
             result.add(
                 DailyWeatherDay(

@@ -3,6 +3,8 @@ package com.example.wetter_app.weather_api.daily
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+//Class for parsed daily weather, used to create actual results
+
 @Serializable
 data class DailyWeatherParsed(
     val latitude: Double,
