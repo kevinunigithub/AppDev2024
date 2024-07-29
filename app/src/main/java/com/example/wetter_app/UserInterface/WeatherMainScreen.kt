@@ -1,18 +1,15 @@
 package com.example.wetter_app.UserInterface
 
-import android.app.Activity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,34 +20,75 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.wetter_app.Logic.HourlyWeatherData
 import com.example.wetter_app.Logic.ImageHandler
-import com.example.wetter_app.Logic.LocationData
 import com.example.wetter_app.Logic.WeatherData
 import com.example.wetter_app.R
 import kotlinx.coroutines.launch
+import com.example.wetter_app.data.LocationModel
 
 @Composable
 fun WeatherApp() {
     val navController: NavHostController = rememberNavController()
-    NavHost(navController = navController, startDestination = "weatherMainScreen") {
-        composable(route = "weatherMainScreen") {
-            WeatherMainScreen(
-                navController = navController
-            )
+    val drawerState = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val drawerWidth = 250.dp
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFE57373))
+    ) {
+        NavHost(navController = navController, startDestination = "weatherMainScreen") {
+            composable(route = "weatherMainScreen") {
+                WeatherMainScreen(
+                    navController = navController,
+                    openDrawer = { drawerState.value = true },
+                )
+            }
+            composable(route = "aboutPage") {
+                AboutPage(
+                    navController = navController
+                )
+            }
         }
-        composable(route = "aboutPage") {
-            AboutPage(
-                navController = navController
-            )
+
+        AnimatedVisibility(
+            visible = drawerState.value,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(drawerWidth)
+                    .background(Color.White)
+            ) {
+                DrawerContent(navController) {
+                    coroutineScope.launch {
+                        drawerState.value = false
+                    }
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherMainScreen(navController: NavHostController) {
-    val context = LocalContext.current as Activity
-    val locationData = remember { LocationData(context) }
-    //sample Data
+fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) {
+    val locationName by remember {
+        derivedStateOf { LocationModel.locationName
+        }
+    }
+
+    val latitude by remember {
+        derivedStateOf {
+            LocationModel.latitude }
+    }
+
+    val longitude by remember {
+        derivedStateOf {
+            LocationModel.longitude
+        }
+    }
+
     val weatherDataList = listOf(
         WeatherData(
             "Monday, 13th July 2024", "Klagenfurt", listOf(
@@ -76,7 +114,7 @@ fun WeatherMainScreen(navController: NavHostController) {
     )
 
     val imageHandler = ImageHandler()
-    val (currentWeatherIndex, setCurrentWeatherIndex) = remember { mutableStateOf(0) }
+    val (currentWeatherIndex, setCurrentWeatherIndex) = remember { mutableIntStateOf(0) }
     val (showDialog, setShowDialog) = remember { mutableStateOf(false) }
 
     val currentWeatherData = weatherDataList[currentWeatherIndex]
@@ -90,29 +128,30 @@ fun WeatherMainScreen(navController: NavHostController) {
             topBar = {
                 TopAppBar(
                     title = {
-                        Column {
-                            Text(
-                                "${currentWeatherData.location}",
-                                color = Color.White,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                currentWeatherData.date,
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Normal
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { /* Will be implemented later */ }) {
-                            Image(
-                                painter = painterResource(id = R.drawable.menu),
-                                contentDescription = "Menu",
-                                modifier = Modifier.size(24.dp)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { openDrawer() }) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.menu),
+                                    contentDescription = "Menu",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(24.dp))
+                            Column {
+                                Text(
+                                    locationName,
+                                    color = Color.White,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    currentWeatherData.date,
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.smallTopAppBarColors(
@@ -145,7 +184,7 @@ fun WeatherMainScreen(navController: NavHostController) {
                         onClick = { setCurrentWeatherIndex((currentWeatherIndex - 1 + weatherDataList.size) % weatherDataList.size) },
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Image(
+                        Icon(
                             painter = painterResource(id = R.drawable.ic_left_arrow),
                             contentDescription = "Previous Weather",
                             modifier = Modifier.size(48.dp)
@@ -180,10 +219,14 @@ fun WeatherMainScreen(navController: NavHostController) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Image(
-                            painter = painterResource(id = imageHandler.getImageResId(currentWeatherData.averageTemperature, currentWeatherData.averageWindSpeed)),
+                            painter = painterResource(
+                                id = imageHandler.getImageResId(
+                                    currentWeatherData.averageTemperature,
+                                    currentWeatherData.averageWindSpeed
+                                )
+                            ),
                             contentDescription = "Weather Image",
-                            modifier = Modifier
-                                .size(200.dp)
+                            modifier = Modifier.size(200.dp)
                         )
                     }
 
@@ -191,7 +234,7 @@ fun WeatherMainScreen(navController: NavHostController) {
                         onClick = { setCurrentWeatherIndex((currentWeatherIndex + 1) % weatherDataList.size) },
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Image(
+                        Icon(
                             painter = painterResource(id = R.drawable.ic_right_arrow),
                             contentDescription = "Next Weather",
                             modifier = Modifier.size(48.dp)
@@ -214,10 +257,12 @@ fun WeatherMainScreen(navController: NavHostController) {
                         .padding(16.dp)
                 )
             }
-        }
 
-        if (showDialog) {
-            WeatherDetailsDialog(weatherData = currentWeatherData, onDismiss = { setShowDialog(false) })
+            if (showDialog) {
+                WeatherDetailsDialog(
+                    weatherData = currentWeatherData,
+                    onDismiss = { setShowDialog(false) })
+            }
         }
     }
 }

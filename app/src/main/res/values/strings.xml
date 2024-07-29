@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Wetter-App</string>
+    <string name="location_standard">My Location</string>
 </resources>
