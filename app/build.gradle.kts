@@ -50,7 +50,9 @@ android {
 }
 
 dependencies {
-
+    implementation("androidx.compose.ui:ui:1.3.0")
+    implementation("androidx.compose.material:material:1.3.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.3.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -61,9 +63,11 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.okhttp)
     implementation(libs.lombok)
-    implementation(libs.jackson.core)
-    implementation(libs.jackson.annotations)
-    implementation(libs.jackson.databind)
+    implementation(libs.engage.core)
+    implementation(libs.play.services.location)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
