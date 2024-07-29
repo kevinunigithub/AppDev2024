@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    kotlin("plugin.serialization")
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -49,7 +51,10 @@ android {
     }
 }
 
+val ktor_version: String by project
+
 dependencies {
+
     implementation("androidx.compose.ui:ui:1.3.0")
     implementation("androidx.compose.material:material:1.3.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.3.0")
@@ -68,6 +73,17 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.jackson.core)
+    implementation(libs.jackson.annotations)
+    implementation(libs.jackson.databind)
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.auth)
+    implementation(libs.play.services.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
