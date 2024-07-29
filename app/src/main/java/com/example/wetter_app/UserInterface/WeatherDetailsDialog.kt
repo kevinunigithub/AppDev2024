@@ -15,12 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.wetter_app.Logic.WeatherData
+import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
-    val hourlyData = weatherData.hourlyData
-
+fun WeatherDetailsDialog(hourlyWeatherData: List<HourlyWeatherHour>, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -35,7 +35,7 @@ fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
             LazyColumn(
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                items(hourlyData) { data ->
+                items(hourlyWeatherData) { data ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -49,8 +49,10 @@ fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
+
+
                                 Text(
-                                    text = data.hour,
+                                    text = data.time,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
                                     color = Color.Black
@@ -65,7 +67,7 @@ fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
                                     color = Color.Black
                                 )
                                 Text(
-                                    text = "Rain: ${data.rainPercentage}%",
+                                    text = "Rain: ${data.precipitationProbability}%",
                                     color = Color.Black
                                 )
                             }

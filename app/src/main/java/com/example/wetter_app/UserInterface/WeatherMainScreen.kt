@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,12 +20,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.wetter_app.Logic.HourlyWeatherData
 import com.example.wetter_app.Logic.ImageHandler
-import com.example.wetter_app.Logic.WeatherData
 import com.example.wetter_app.R
 import kotlinx.coroutines.launch
 import com.example.wetter_app.data.LocationModel
+import com.example.wetter_app.weather_api.Weather
+import com.example.wetter_app.weather_api.WeatherAPI
+import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
+import kotlinx.datetime.Clock
+import com.example.wetter_app.Logic.WeatherDataHandler
 
 @Composable
 fun WeatherApp() {
@@ -42,6 +47,7 @@ fun WeatherApp() {
                 WeatherMainScreen(
                     navController = navController,
                     openDrawer = { drawerState.value = true },
+                    weatherDataHandler = WeatherDataHandler(WeatherAPI())
                 )
             }
             composable(route = "aboutPage") {
@@ -72,7 +78,7 @@ fun WeatherApp() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) {
+fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit,  weatherDataHandler: WeatherDataHandler) {
     val locationName by remember {
         derivedStateOf { LocationModel.locationName
         }
@@ -89,35 +95,29 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) 
         }
     }
 
-    val weatherDataList = listOf(
-        WeatherData(
-            "Monday, 13th July 2024", "Klagenfurt", listOf(
-                HourlyWeatherData("13:00", 25, 10, 20),
-                HourlyWeatherData("14:00", 26, 11, 30),
-                HourlyWeatherData("15:00", 27, 12, 25)
-            )
-        ),
-        WeatherData(
-            "Tuesday, 14th July 2024", "Klagenfurt", listOf(
-                HourlyWeatherData("13:00", 28, 13, 10),
-                HourlyWeatherData("14:00", 29, 14, 15),
-                HourlyWeatherData("15:00", 30, 15, 10)
-            )
-        ),
-        WeatherData(
-            "Wednesday, 15th July 2024", "Klagenfurt", listOf(
-                HourlyWeatherData("13:00", 22, 8, 50),
-                HourlyWeatherData("14:00", 21, 9, 55),
-                HourlyWeatherData("15:00", 20, 10, 60)
-            )
-        )
-    )
 
-    val imageHandler = ImageHandler()
-    val (currentWeatherIndex, setCurrentWeatherIndex) = remember { mutableIntStateOf(0) }
-    val (showDialog, setShowDialog) = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var currentWeather by remember { mutableStateOf<Weather?>(null) }
+    var hourlyWeatherData by remember { mutableStateOf<List<HourlyWeatherHour>?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+    var lastFetchTimeMillis by remember { mutableStateOf<Long?>(null) }
+    val imageHandler = ImageHandler();
+    var showRainRadar by remember { mutableStateOf(false) }
+    val lat = 46.63
+    val lon = 14.31
 
-    val currentWeatherData = weatherDataList[currentWeatherIndex]
+    LaunchedEffect(Unit) {
+
+        try {
+            val (current, hourly) = weatherDataHandler.initialize(lat, lon)
+            currentWeather = current?.current
+            hourlyWeatherData = hourly
+            showDialog = false
+            lastFetchTimeMillis = Clock.System.now().toEpochMilliseconds()
+        } catch (e: Exception) {
+            println("Error fetching weather data: ${e.message}")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -128,30 +128,70 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) 
             topBar = {
                 TopAppBar(
                     title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { openDrawer() }) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.menu),
-                                    contentDescription = "Menu",
-                                    modifier = Modifier.size(24.dp)
-                                )
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                IconButton(onClick = { openDrawer() }) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.menu),
+                                        contentDescription = "Menu",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        LocationModel.locationName,
+                                        color = Color.White,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    )
+                                    lastFetchTimeMillis?.let { lastFetchTime ->
+                                        val currentTime = Clock.System.now().toEpochMilliseconds()
+                                        val minutesAgo = (currentTime - lastFetchTime) / (1000 * 60)
+                                        Text(
+                                            text = "Data fetched $minutesAgo minutes ago",
+                                            color = Color.White,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Weather Data",
+                                        color = Color.White,
+                                        fontSize = 16.sp
+                                    )
+                                }
                             }
-                            Spacer(modifier = Modifier.width(24.dp))
-                            Column {
-                                Text(
-                                    locationName,
-                                    color = Color.White,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    currentWeatherData.date,
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Normal
-                                )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                try {
+                                    val lat = latitude
+                                    val lon = longitude
+                                    currentWeather = weatherDataHandler.syncWeather(lat, lon)?.current
+                                    hourlyWeatherData = weatherDataHandler.syncHourlyWeather(lat, lon)
+                                    lastFetchTimeMillis = Clock.System.now().toEpochMilliseconds()
+                                } catch (e: Exception) {
+                                    println("Error syncing weather data: ${e.message}")
+                                }
                             }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Sync Data",
+                                tint = Color.White
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.smallTopAppBarColors(
@@ -165,88 +205,89 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) 
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 16.dp)
             ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    if (showRainRadar) {
+                        RainRadar(lat, lon)
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(550.dp)
+                            .padding(horizontal = 16.dp)
+                            .clickable { showDialog = true },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        currentWeather?.let { weather ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(
+                                        id = imageHandler.getImageResId(
+                                            weather.temperature,
+                                            weather.windSpeed
+                                        )
+                                    ),
+                                    contentDescription = "Weather Image",
+                                    modifier = Modifier.size(150.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Temperature: ${weather.temperature}°C",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    "Windspeed: ${weather.windSpeed} km/h",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    "Humidity: ${weather.humidity}%",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    "Precipitation: ${weather.precipitation} mm",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(horizontal = 16.dp)
-                        .clickable { setShowDialog(true) },
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    IconButton(
-                        onClick = { setCurrentWeatherIndex((currentWeatherIndex - 1 + weatherDataList.size) % weatherDataList.size) },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_left_arrow),
-                            contentDescription = "Previous Weather",
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 16.dp)
-                    ) {
+                    Button(onClick = { showRainRadar = !showRainRadar }) {
                         Text(
-                            "Temperature: ${currentWeatherData.averageTemperature}°C",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            "Windspeed: ${currentWeatherData.averageWindSpeed} km/h",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            "Rain: ${currentWeatherData.averageRainPercentage}%",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Image(
-                            painter = painterResource(
-                                id = imageHandler.getImageResId(
-                                    currentWeatherData.averageTemperature,
-                                    currentWeatherData.averageWindSpeed
-                                )
-                            ),
-                            contentDescription = "Weather Image",
-                            modifier = Modifier.size(200.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { setCurrentWeatherIndex((currentWeatherIndex + 1) % weatherDataList.size) },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_right_arrow),
-                            contentDescription = "Next Weather",
-                            modifier = Modifier.size(48.dp)
+                            text = if (showRainRadar) "Hide Rain Radar" else "Show Rain Radar"
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                RainRadar()
-
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "About",
@@ -259,9 +300,9 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit) 
             }
 
             if (showDialog) {
-                WeatherDetailsDialog(
-                    weatherData = currentWeatherData,
-                    onDismiss = { setShowDialog(false) })
+                hourlyWeatherData?.let { data ->
+                    WeatherDetailsDialog(hourlyWeatherData = data, onDismiss = { showDialog = false })
+                }
             }
         }
     }

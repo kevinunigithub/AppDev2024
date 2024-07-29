@@ -20,19 +20,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
-fun RainRadar() {
+fun RainRadar(lat: Double, long: Double) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight()
             .padding(horizontal = 6.dp)
-            .height(600.dp)
+            .height(100.dp)
             .background(Color.Transparent)
     ) {
-        //val url = "https://www.ventusky.com/?p=${LocationModel.latitude};${LocationModel.longitude};11&l=rain-3h"
+
         WebViewComponent(
-            url = "https://www.ventusky.com/?p=46.606;14.359;11&l=rain-3h",
-            //vielleicht besser: https://www.rainviewer.com/map.html?loc=46.63,14.31,8&oFa=1&oC=1&oU=1&oCS=0&oF=0&oAP=0&rmt=1&c=1&lp=1&sm=1&sn=1
+            url = "https://www.ventusky.com/?p=${lat};${long};11&l=rain-3h",
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Transparent)
