@@ -8,6 +8,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+//This class manages the SQLite DB for local settings storage
+//This is managed by the SettingsManager
 
 class LocalStorage(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
