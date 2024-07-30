@@ -38,6 +38,7 @@ class SettingsManager(context: Context) {
             Log.i("Settings", "New settings")
             //Essentially first app start -> everything is null
             storage.insert(SettingsModel(locationList, true, reference, false))
+            settingsInitialized = true
             db = RemoteDatabase(reference)
         }
 
