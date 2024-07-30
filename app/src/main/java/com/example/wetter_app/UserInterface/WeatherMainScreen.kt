@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -31,6 +33,7 @@ import com.example.wetter_app.weather_api.WeatherAPI
 import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
 import kotlinx.datetime.Clock
 import com.example.wetter_app.Logic.WeatherDataHandler
+import com.example.wetter_app.weather_api.daily.DailyWeatherDay
 
 @Composable
 fun WeatherApp() {
@@ -80,7 +83,11 @@ fun WeatherApp() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, weatherDataHandler: WeatherDataHandler) {
+fun WeatherMainScreen(
+    navController: NavHostController,
+    openDrawer: () -> Unit,
+    weatherDataHandler: WeatherDataHandler
+) {
     val locationName by LocationModel.locationName.collectAsState()
     val latitude by LocationModel.latitude.collectAsState()
     val longitude by LocationModel.longitude.collectAsState()
@@ -88,18 +95,22 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
     val coroutineScope = rememberCoroutineScope()
     var currentWeather by remember { mutableStateOf<Weather?>(null) }
     var hourlyWeatherData by remember { mutableStateOf<List<HourlyWeatherHour>?>(null) }
+    var dailyWeatherData by remember { mutableStateOf<List<DailyWeatherDay>?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var lastFetchTimeMillis by remember { mutableStateOf<Long?>(null) }
     val imageHandler = ImageHandler()
     var showRainRadar by remember { mutableStateOf(false) }
+    var currentDayIndex by remember { mutableStateOf(0) }
 
     LaunchedEffect(latitude, longitude) {
         try {
-            val (current, hourly) = weatherDataHandler.initialize(latitude, longitude)
+            val (current, hourly, daily) = weatherDataHandler.initialize(latitude, longitude)
             currentWeather = current?.current
             hourlyWeatherData = hourly
+            dailyWeatherData = daily
             showDialog = false
             lastFetchTimeMillis = Clock.System.now().toEpochMilliseconds()
+            currentDayIndex = 0
         } catch (e: Exception) {
             println("Error fetching weather data: ${e.message}")
         }
@@ -118,7 +129,7 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(150.dp)
+                                    .height(200.dp)
                                     .padding(horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -165,6 +176,7 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                                 try {
                                     currentWeather = weatherDataHandler.syncWeather(latitude, longitude)?.current
                                     hourlyWeatherData = weatherDataHandler.syncHourlyWeather(latitude, longitude)
+                                    dailyWeatherData = weatherDataHandler.syncDailyWeather(latitude, longitude)
                                     lastFetchTimeMillis = Clock.System.now().toEpochMilliseconds()
                                 } catch (e: Exception) {
                                     println("Error syncing weather data: ${e.message}")
@@ -207,20 +219,25 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                         .padding(horizontal = 16.dp)
                 ) {
                     if (showRainRadar) {
-                        RainRadar(latitude, longitude)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 64.dp)
+                        ) {
+                            RainRadar(latitude, longitude)
+                        }
                         Spacer(modifier = Modifier.height(10.dp))
                     }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(550.dp)
-                            .padding(horizontal = 16.dp)
-                            .clickable { showDialog = true },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        currentWeather?.let { weather ->
+                    currentWeather?.let { weather ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(350.dp)
+                                .padding(horizontal = 16.dp)
+                                .clickable { showDialog = true },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -265,36 +282,124 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                             }
                         }
                     }
-                }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(onClick = { showRainRadar = !showRainRadar }) {
-                        Text(
-                            text = if (showRainRadar) "Hide Rain Radar" else "Show Rain Radar"
-                        )
+                    Text(
+                        text = "Forecast",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+
+                    dailyWeatherData?.let { dailyData ->
+                        if (dailyData.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        if (currentDayIndex > 0) {
+                                            currentDayIndex -= 1
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "Previous Day",
+                                        tint = Color.White
+                                    )
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    val currentDay = dailyData.getOrNull(currentDayIndex)
+                                    if (currentDay != null) {
+                                        Text(
+                                            text = "Date: ${currentDay.time}",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "Max Temp: ${currentDay.maxTemperature}°${if (isMetric) "C" else "F"}",
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                        Text(
+                                            text = "Min Temp: ${currentDay.minTemperature}°${if (isMetric) "C" else "F"}",
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                        Text(
+                                            text = "Precipitation: ${currentDay.maxPrecipitationProbability}%",
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "No data available",
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        if (currentDayIndex < dailyData.size - 1) {
+                                            currentDayIndex += 1
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowForward,
+                                        contentDescription = "Next Day",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "No daily weather data available",
+                                color = Color.White,
+                                fontSize = 15.sp
+                            )
+                        }
                     }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(onClick = { showRainRadar = !showRainRadar }) {
+                            Text(
+                                text = if (showRainRadar) "Hide Rain Radar" else "Show Rain Radar"
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "About",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        modifier = Modifier
+                            .clickable { navController.navigate("aboutPage") }
+                            .padding(16.dp)
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "About",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .clickable { navController.navigate("aboutPage") }
-                        .padding(16.dp)
-                )
-            }
-
-            if (showDialog) {
-                hourlyWeatherData?.let { data ->
-                    WeatherDetailsDialog(hourlyWeatherData = data, onDismiss = { showDialog = false })
+                if (showDialog) {
+                    hourlyWeatherData?.let { data ->
+                        WeatherDetailsDialog(hourlyWeatherData = data, onDismiss = { showDialog = false })
+                    }
                 }
             }
         }

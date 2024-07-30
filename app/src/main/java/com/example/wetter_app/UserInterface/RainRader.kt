@@ -5,7 +5,6 @@ import android.webkit.SslErrorHandler
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+
 
 @Composable
 fun RainRadar(lat: Double, long: Double) {
@@ -27,14 +26,12 @@ fun RainRadar(lat: Double, long: Double) {
             .fillMaxHeight()
             .padding(horizontal = 6.dp)
             .height(100.dp)
-            .background(Color.Transparent)
     ) {
 
         WebViewComponent(
             url = "https://www.ventusky.com/?p=${lat};${long};11&l=rain-3h",
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Transparent)
         )
     }
 }
@@ -45,7 +42,11 @@ fun WebViewComponent(url: String, modifier: Modifier = Modifier) {
     AndroidView(factory = {
         WebView(context).apply {
             webViewClient = object : WebViewClient() {
-                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                override fun onReceivedSslError(
+                    view: WebView?,
+                    handler: SslErrorHandler?,
+                    error: SslError?
+                ) {
                     handler?.proceed()
                 }
             }
