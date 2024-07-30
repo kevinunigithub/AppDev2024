@@ -22,13 +22,11 @@ class LocationData(private val context: Context) {
     private val objectMapper = jacksonObjectMapper()
     private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
-
     fun getCurrentLocationData(onLocationFetched: (latitude: Double, longitude: Double) -> Unit) {
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                 location?.let {
-                    LocationModel.latitude = it.latitude
-                    LocationModel.longitude = it.longitude
+                    LocationModel.updateLocation("My Location", it.latitude, it.longitude)
                 }
             }
         } else {
@@ -52,8 +50,7 @@ class LocationData(private val context: Context) {
                         val locations: LocationResponse = objectMapper.readValue(responseBodyString)
                         if (locations.features.isNotEmpty()) {
                             val location = locations.features[0]
-                            LocationModel.longitude = location.geometry.coordinates[0]
-                            LocationModel.latitude = location.geometry.coordinates[1]
+                            LocationModel.updateLocation(query, location.geometry.coordinates[1], location.geometry.coordinates[0])
                         }
                     }
                 }

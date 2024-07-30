@@ -1,19 +1,22 @@
 package com.example.wetter_app.data
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 
 object LocationModel {
-    var locationName by mutableStateOf("My Location")
-    var latitude by mutableDoubleStateOf(0.0)
-    var longitude by mutableDoubleStateOf(0.0)
+    private val _locationName = MutableStateFlow("My Location")
+    val locationName: StateFlow<String> get() = _locationName
+
+    private val _latitude = MutableStateFlow(0.0)
+    val latitude: StateFlow<Double> get() = _latitude
+
+    private val _longitude = MutableStateFlow(0.0)
+    val longitude: StateFlow<Double> get() = _longitude
 
     fun updateLocation(name: String, lat: Double, lon: Double) {
-        locationName = name
-        latitude = lat
-        longitude = lon
+        _locationName.value = name
+        _latitude.value = lat
+        _longitude.value = lon
     }
 }

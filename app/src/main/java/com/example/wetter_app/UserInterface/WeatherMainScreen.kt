@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.wetter_app.Logic.ImageHandler
+import com.example.wetter_app.Logic.UnitSystem
 import com.example.wetter_app.R
 import kotlinx.coroutines.launch
 import com.example.wetter_app.data.LocationModel
@@ -78,38 +80,22 @@ fun WeatherApp() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit,  weatherDataHandler: WeatherDataHandler) {
-    val locationName by remember {
-        derivedStateOf { LocationModel.locationName
-        }
-    }
-
-    val latitude by remember {
-        derivedStateOf {
-            LocationModel.latitude }
-    }
-
-    val longitude by remember {
-        derivedStateOf {
-            LocationModel.longitude
-        }
-    }
-
-
+fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, weatherDataHandler: WeatherDataHandler) {
+    val locationName by LocationModel.locationName.collectAsState()
+    val latitude by LocationModel.latitude.collectAsState()
+    val longitude by LocationModel.longitude.collectAsState()
+    val isMetric by UnitSystem.isMetric.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var currentWeather by remember { mutableStateOf<Weather?>(null) }
     var hourlyWeatherData by remember { mutableStateOf<List<HourlyWeatherHour>?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var lastFetchTimeMillis by remember { mutableStateOf<Long?>(null) }
-    val imageHandler = ImageHandler();
+    val imageHandler = ImageHandler()
     var showRainRadar by remember { mutableStateOf(false) }
-    val lat = 46.63
-    val lon = 14.31
 
-    LaunchedEffect(Unit) {
-
+    LaunchedEffect(latitude, longitude) {
         try {
-            val (current, hourly) = weatherDataHandler.initialize(lat, lon)
+            val (current, hourly) = weatherDataHandler.initialize(latitude, longitude)
             currentWeather = current?.current
             hourlyWeatherData = hourly
             showDialog = false
@@ -148,7 +134,7 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        LocationModel.locationName,
+                                        locationName,
                                         color = Color.White,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold,
@@ -177,10 +163,8 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                         IconButton(onClick = {
                             coroutineScope.launch {
                                 try {
-                                    val lat = latitude
-                                    val lon = longitude
-                                    currentWeather = weatherDataHandler.syncWeather(lat, lon)?.current
-                                    hourlyWeatherData = weatherDataHandler.syncHourlyWeather(lat, lon)
+                                    currentWeather = weatherDataHandler.syncWeather(latitude, longitude)?.current
+                                    hourlyWeatherData = weatherDataHandler.syncHourlyWeather(latitude, longitude)
                                     lastFetchTimeMillis = Clock.System.now().toEpochMilliseconds()
                                 } catch (e: Exception) {
                                     println("Error syncing weather data: ${e.message}")
@@ -190,6 +174,15 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = "Sync Data",
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = {
+                            UnitSystem.toggleUnitSystem()
+                        }) {
+                            Icon(
+                                imageVector = if (isMetric) Icons.Default.Settings else Icons.Default.Settings,
+                                contentDescription = "Toggle Units",
                                 tint = Color.White
                             )
                         }
@@ -214,7 +207,7 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                         .padding(horizontal = 16.dp)
                 ) {
                     if (showRainRadar) {
-                        RainRadar(lat, lon)
+                        RainRadar(latitude, longitude)
                         Spacer(modifier = Modifier.height(10.dp))
                     }
 
@@ -246,13 +239,13 @@ fun WeatherMainScreen(navController: NavHostController, openDrawer: () -> Unit, 
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    "Temperature: ${weather.temperature}°C",
+                                    "Temperature: ${if (isMetric) "${weather.temperature}°C" else "${(weather.temperature * 9 / 5 + 32).toInt()}°F"}",
                                     color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    "Windspeed: ${weather.windSpeed} km/h",
+                                    "Windspeed: ${if (isMetric) "${weather.windSpeed} km/h" else "${(weather.windSpeed / 1.609).toInt()} mph"}",
                                     color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
