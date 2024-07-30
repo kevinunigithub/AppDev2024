@@ -3,6 +3,7 @@ package com.example.wetter_app.storage_api
 import android.content.Context
 import android.util.Log
 
+//The SettingsManager Class is used for managing App settings and their synchronization to local storage as well as the remote DB
 
 class SettingsManager(context: Context) {
 
@@ -16,10 +17,10 @@ class SettingsManager(context: Context) {
     private var reference: String? = null
     private var remoteEnabled = false
     // + Whatever other settings are here
-    //Add other settings here and in the SettingsModel
+    //Add other settings variables here and in the SettingsModel, they can be public
 
 
-    //Initialize settings on app start
+    //Initialize settings on app start -> needs to be in onCreate of main
     fun initialize() {
         val settings = storage.get()
         if (settings != null) {
@@ -76,7 +77,9 @@ class SettingsManager(context: Context) {
         locationList?.put(newId.toHexString(), newLocation)
 
         storage.update(getSettingsModel())
-        db.updateSettings(getSettingsModel())
+        if(remoteEnabled){
+         db.updateSettings(getSettingsModel())   
+        } 
     }
 
     //Remove Location
@@ -88,11 +91,12 @@ class SettingsManager(context: Context) {
         }
     }
 
-    //Helper function to avoid repeated code
+    //Helper function to avoid repeated code for getting new SettingsModel
     private fun getSettingsModel(): SettingsModel {
         return SettingsModel(locationList, settingsInitialized, reference, remoteEnabled)
     }
 
+    //Enable Remote DB functionality -> TODO: expand with reference for possible settings import
     fun enableRemoteDb() {
         if (remoteEnabled) {
             return
@@ -103,7 +107,7 @@ class SettingsManager(context: Context) {
         storage.update(getSettingsModel())
     }
 
-    //Sync settings from DB
+    //Sync settings from DB to device
     fun synchronize() {
         val settings = db.getSettings()
         if (settings != null) {
@@ -112,7 +116,7 @@ class SettingsManager(context: Context) {
             reference = settings.reference
             remoteEnabled = settings.remoteEnabled
         } else {
-            Log.w("Sync", "Synchronization Failed!")
+            Log.w("Sync", "Synchronization from DB Failed!")
         }
 
     }
