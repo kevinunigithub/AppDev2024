@@ -1,4 +1,4 @@
-package com.example.wetter_app.UserInterface
+package com.example.wetter_app.user_interface
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,16 +10,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.wetter_app.Logic.WeatherData
+import com.example.wetter_app.Logic.UnitSystem
+import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
 
 @Composable
-fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
-    val hourlyData = weatherData.hourlyData
+fun WeatherDetailsDialog(hourlyWeatherData: List<HourlyWeatherHour>, onDismiss: () -> Unit) {
+    val isMetric by UnitSystem.isMetric.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -35,7 +38,7 @@ fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
             LazyColumn(
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                items(hourlyData) { data ->
+                items(hourlyWeatherData) { data ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -49,23 +52,35 @@ fun WeatherDetailsDialog(weatherData: WeatherData, onDismiss: () -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
+                                val temperature = if (isMetric) {
+                                    "${data.temperature}°C"
+                                } else {
+                                    "${(data.temperature * 9 / 5 + 32).toInt()}°F"
+                                }
+
+                                val windSpeed = if (isMetric) {
+                                    "${data.windSpeed} km/h"
+                                } else {
+                                    "${(data.windSpeed / 1.609).toInt()} mph"
+                                }
+
                                 Text(
-                                    text = data.hour,
+                                    text = data.time,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
                                     color = Color.Black
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Temp: ${data.temperature}°C",
+                                    text = "Temp: $temperature",
                                     color = Color.Black
                                 )
                                 Text(
-                                    text = "Wind: ${data.windSpeed} km/h",
+                                    text = "Wind: $windSpeed",
                                     color = Color.Black
                                 )
                                 Text(
-                                    text = "Rain: ${data.rainPercentage}%",
+                                    text = "Rain: ${data.precipitationProbability}%",
                                     color = Color.Black
                                 )
                             }
