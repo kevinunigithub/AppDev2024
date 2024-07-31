@@ -204,11 +204,10 @@ fun WeatherMainScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 64.dp)
+                                .padding(bottom = 60.dp)
                         ) {
                             RainRadar(latitude, longitude)
                         }
-                        Spacer(modifier = Modifier.height(10.dp))
                     }
                     currentWeather?.let { weather ->
                         Row(
@@ -355,17 +354,24 @@ fun WeatherMainScreen(
                         }
                     }
 
-                    Row(
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Button(
+                        onClick = { showRainRadar = !showRainRadar },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center
+                            .wrapContentWidth()
+                            .align(Alignment.Center)
+                            .padding(bottom = 16.dp)
                     ) {
-                        Button(onClick = { showRainRadar = !showRainRadar }) {
-                            Text(
-                                text = if (showRainRadar) "Hide Rain Radar" else "Show Rain Radar"
-                            )
-                        }
+                        Text(
+                            text = if (showRainRadar) "Hide Rain Radar" else "Show Rain Radar"
+                        )
                     }
                 }
 
