@@ -1,4 +1,4 @@
-package com.example.wetter_app.UserInterface
+package com.example.wetter_app.user_interface
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

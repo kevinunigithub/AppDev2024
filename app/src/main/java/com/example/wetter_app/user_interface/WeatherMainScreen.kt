@@ -1,4 +1,4 @@
-package com.example.wetter_app.UserInterface
+package com.example.wetter_app.user_interface
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +33,8 @@ import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
 import kotlinx.datetime.Clock
 import com.example.wetter_app.Logic.WeatherDataHandler
 import com.example.wetter_app.weather_api.daily.DailyWeatherDay
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun WeatherApp() {
@@ -125,49 +126,39 @@ fun WeatherMainScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                IconButton(onClick = { openDrawer() }) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.menu),
-                                        contentDescription = "Menu",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
+                                Text(
+                                    locationName,
+                                    color = Color.White,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                lastFetchTimeMillis?.let { lastFetchTime ->
+                                    val currentTime = Clock.System.now().toEpochMilliseconds()
+                                    val minutesAgo = (currentTime - lastFetchTime) / (1000 * 60)
                                     Text(
-                                        locationName,
+                                        text = "Data fetched $minutesAgo minutes ago",
                                         color = Color.White,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(bottom = 4.dp)
-                                    )
-                                    lastFetchTimeMillis?.let { lastFetchTime ->
-                                        val currentTime = Clock.System.now().toEpochMilliseconds()
-                                        val minutesAgo = (currentTime - lastFetchTime) / (1000 * 60)
-                                        Text(
-                                            text = "Data fetched $minutesAgo minutes ago",
-                                            color = Color.White,
-                                            fontSize = 12.sp
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Weather Data",
-                                        color = Color.White,
-                                        fontSize = 16.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                             }
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { openDrawer() }) {
+                            Image(
+                                painter = painterResource(id = R.drawable.menu),
+                                contentDescription = "Menu",
+                                Modifier.size(28.dp)
+                            )
                         }
                     },
                     actions = {
@@ -186,15 +177,6 @@ fun WeatherMainScreen(
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = "Sync Data",
-                                tint = Color.White
-                            )
-                        }
-                        IconButton(onClick = {
-                            UnitSystem.toggleUnitSystem()
-                        }) {
-                            Icon(
-                                imageVector = if (isMetric) Icons.Default.Settings else Icons.Default.Settings,
-                                contentDescription = "Toggle Units",
                                 tint = Color.White
                             )
                         }
@@ -318,8 +300,10 @@ fun WeatherMainScreen(
                                 ) {
                                     val currentDay = dailyData.getOrNull(currentDayIndex)
                                     if (currentDay != null) {
+                                        val parsedDate = LocalDate.parse(currentDay.time)
+                                        val formattedDate = parsedDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
                                         Text(
-                                            text = "Date: ${currentDay.time}",
+                                            text = formattedDate,
                                             color = Color.White,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Medium
@@ -383,17 +367,6 @@ fun WeatherMainScreen(
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "About",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .clickable { navController.navigate("aboutPage") }
-                            .padding(16.dp)
-                    )
                 }
 
                 if (showDialog) {

@@ -1,4 +1,4 @@
-package com.example.wetter_app.UserInterface
+package com.example.wetter_app.user_interface
 
 import android.net.http.SslError
 import android.webkit.SslErrorHandler
@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-
 
 @Composable
 fun RainRadar(lat: Double, long: Double) {

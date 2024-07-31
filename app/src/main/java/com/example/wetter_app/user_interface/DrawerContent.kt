@@ -1,31 +1,14 @@
-package com.example.wetter_app.UserInterface
+package com.example.wetter_app.user_interface
 
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +30,7 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
     val (searchResults, setSearchResults) = remember { mutableStateOf(emptyList<String>()) }
     val coroutineScope = rememberCoroutineScope()
     val isMetric by UnitSystem.isMetric.collectAsState()
+    val myLocation = "My Location"
 
     Column(
         modifier = Modifier
@@ -68,6 +52,7 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
                 modifier = Modifier.size(24.dp)
             )
         }
+
         Row {
             SearchBar(
                 onSearch = { query ->
@@ -79,9 +64,9 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
                 searchResults = searchResults,
                 onSelectResult = { result ->
                     coroutineScope.launch {
-                        if (result.equals("My Location", ignoreCase = true)) {
+                        if (result.equals(myLocation, ignoreCase = true)) {
                             locationData.getCurrentLocationData { lat, lon ->
-                                LocationModel.updateLocation("My Location", lat, lon)
+                                LocationModel.updateLocation(myLocation, lat, lon)
                             }
                         } else {
                             locationData.getLocationDataOfChosenPlace(result) { lat, lon ->
@@ -99,7 +84,10 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { UnitSystem.toggleUnitSystem() }
+                .clickable {
+                    UnitSystem.toggleUnitSystem()
+                    closeDrawer()
+                }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -115,7 +103,10 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
             color = Color.Black,
             fontSize = 16.sp,
             modifier = Modifier
-                .clickable { navController.navigate("aboutPage") }
+                .clickable {
+                    navController.navigate("aboutPage")
+                    closeDrawer()
+                }
                 .padding(16.dp)
         )
     }
