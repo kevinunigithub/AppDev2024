@@ -14,10 +14,12 @@ class SettingsManager(context: Context) {
     //Settings
     private var settingsInitialized = false
     private var locationList: MutableMap<String, Location>? = mutableMapOf()
-    private var reference: String? = null
-    private var remoteEnabled = false
+    var reference: String? = null //Can be accessed form outside to display User reference for import in other devices
+        private set
+    var remoteEnabled = false //This can be accessed from outside to read its status
+        private set
     // + Whatever other settings are here
-    //Add other settings variables here and in the SettingsModel, they can be public
+    //Add other settings variables here, in the SettingsModel Class and getSettingsModel() Function, they can be public
 
 
     //Initialize settings on app start -> needs to be in onCreate of main
@@ -37,16 +39,25 @@ class SettingsManager(context: Context) {
         } else {
             Log.i("Settings", "New settings")
             //Essentially first app start -> everything is null
-            storage.insert(SettingsModel(locationList, true, reference, false))
+            storage.insert(
+                SettingsModel(
+                    locationList,
+                    true,
+                    reference,
+                    false
+                )
+            )
             settingsInitialized = true
+            //Remote DB is initialized for later use
             db = RemoteDatabase(reference)
         }
 
     }
 
     //Get Location by id
+    @OptIn(ExperimentalStdlibApi::class)
     fun getLocation(id: Int): Location? {
-        return locationList?.get(id.toString())
+        return locationList?.get(id.toHexString())
     }
 
     //Get all Locations
@@ -78,9 +89,9 @@ class SettingsManager(context: Context) {
         locationList?.put(newId.toHexString(), newLocation)
 
         storage.update(getSettingsModel())
-        if(remoteEnabled){
-         db.updateSettings(getSettingsModel())   
-        } 
+        if (remoteEnabled) {
+            db.updateSettings(getSettingsModel())
+        }
     }
 
     //Remove Location
@@ -94,32 +105,86 @@ class SettingsManager(context: Context) {
 
     //Helper function to avoid repeated code for getting new SettingsModel
     private fun getSettingsModel(): SettingsModel {
-        return SettingsModel(locationList, settingsInitialized, reference, remoteEnabled)
+        return SettingsModel(
+            locationList,
+            settingsInitialized,
+            reference,
+            remoteEnabled
+        )
     }
 
-    //Enable Remote DB functionality -> TODO: expand with reference for possible settings import
-    fun enableRemoteDb() {
+    //Enable Remote DB functionality -> expanded with reference for possible settings import on enabling
+    fun enableRemoteDb(import: Boolean, ref: String?): Int {
+        //Possible return status:
+        // 0 = Remote already enabled
+        // 1 = Remote enabling success
+        // 2 = Import Failed
+        // 3 = Empty reference
         if (remoteEnabled) {
-            return
+            return 0
         }
         remoteEnabled = true
-        reference = db.createNew(SettingsModel(locationList, settingsInitialized, reference, true))
-        Log.i("New DB Entry", reference.toString())
-        storage.update(getSettingsModel())
-    }
 
-    //Sync settings from DB to device
-    fun synchronize() {
-        val settings = db.getSettings()
-        if (settings != null) {
-            settingsInitialized = settings.settingsInitialized
-            locationList = settings.locationList
-            reference = settings.reference
-            remoteEnabled = settings.remoteEnabled
+        if (import) {
+            if (ref.isNullOrEmpty()) { //If empty reference -> return
+                return 3
+            } else {
+                val importResponse = importRemote(ref)
+                return if (importResponse == 1) {
+                    1
+                } else {
+                    2 //Import only fails if invalid reference or no internet connection
+                }
+            }
         } else {
-            Log.w("Sync", "Synchronization from DB Failed!")
+            reference = db.createNew(getSettingsModel())
+            storage.update(getSettingsModel())
+            Log.i("REMOTE", "Remote sync enabled!")
+            return 1
         }
 
+    }
+
+    //Sync settings from DB to device -> can also be called from outside initialize() for manual trigger
+    fun synchronize() {
+        val settingsRemote = db.getSettings()
+        val settingsLocal = storage.get()
+        if (settingsRemote != null) {
+            //Synchronize depending on modifiedTime
+            if (settingsLocal != null && (settingsLocal.modifiedTime > settingsRemote.modifiedTime)) {
+                db.updateSettings(settingsLocal)
+            } else {
+                storage.update(settingsRemote)
+            }
+        } else {
+            //If no entry in DB -> upload
+            db.updateSettings(getSettingsModel())
+        }
+        Log.i("SYNC", "Synchronization successfull")
+    }
+
+    //Import settings from DB to device via reference -> can be triggered from outside
+    fun importRemote(ref: String): Int {
+        //Return codes are as follows:
+        // 0 = Error -> wrong reference or no internet connection
+        // 1 = Success
+
+        if (!remoteEnabled || ref.isEmpty()) { //Remote must be enabled and reference not empty
+            return 0
+        }
+
+        val importedSettings = db.importSettings(ref)
+        if (importedSettings != null) {
+            settingsInitialized = importedSettings.settingsInitialized
+            locationList = importedSettings.locationList
+            reference = importedSettings.reference
+            remoteEnabled = importedSettings.remoteEnabled
+            storage.update(importedSettings)
+            return 1
+        } else {
+            Log.w("IMPORT", "Import from DB Failed!")
+            return 0
+        }
     }
 
 }

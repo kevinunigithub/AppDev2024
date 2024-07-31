@@ -9,6 +9,7 @@ data class SettingsModel(
     var locationList: MutableMap<String, Location>? = null,
     var settingsInitialized: Boolean = false,
     var reference : String? = null,
-    var remoteEnabled : Boolean = false
+    var remoteEnabled : Boolean = false,
+    var modifiedTime : Long = System.currentTimeMillis()
 )
 

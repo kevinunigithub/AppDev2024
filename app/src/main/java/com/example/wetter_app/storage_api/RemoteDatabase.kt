@@ -46,6 +46,20 @@ class RemoteDatabase(reference: String?) {
         return result
     }
 
+    //Import Settings from Database -> Also set DB settings accordingly
+    fun importSettings(reference: String): SettingsModel? {
+        var result: SettingsModel? = null
+        val path = FirebaseDatabase.getInstance().getReference("settings/$reference")
+        path.get().addOnSuccessListener {
+            result = it.getValue<SettingsModel>()
+            firebaseRef = path
+            userReference = reference
+        }.addOnFailureListener {
+            Log.e("Get Settings", "Failed to get Settings from DB")
+        }
+        return result
+    }
+
     //Update Settings -> no real need to update specific fields as there is very little data for now
     fun updateSettings(settings: SettingsModel) {
         firebaseRef.setValue(settings)
