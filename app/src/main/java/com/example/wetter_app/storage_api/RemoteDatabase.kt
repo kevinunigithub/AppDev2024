@@ -3,8 +3,6 @@ package com.example.wetter_app.storage_api
 import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 
 class RemoteDatabase(reference: String?) {
     //Database for synchronization across devices
@@ -12,15 +10,6 @@ class RemoteDatabase(reference: String?) {
 
     private var firebaseRef = FirebaseDatabase.getInstance().getReference("settings/$reference")
     private lateinit var userReference : String
-
-    //Json serializer settings
-    @OptIn(ExperimentalSerializationApi::class)
-    private val jsonConverter = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
 
     //Create New settings in DB
     fun createNew(settings: SettingsModel): String {

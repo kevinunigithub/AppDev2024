@@ -85,7 +85,7 @@ class WeatherAPI {
         return result
     }
 
-    //Stop API
+    //Stop API -> should be called on closing the app
     fun stop() {
         client.close()
     }
