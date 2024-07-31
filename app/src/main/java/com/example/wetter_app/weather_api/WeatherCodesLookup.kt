@@ -3,7 +3,7 @@ package com.example.wetter_app.weather_api
 //Lookup table for all the weather codes from the API
 
 class WeatherCodesLookup {
-    val codes = mapOf(
+    private val codes = mapOf(
         0 to "Clear sky",
         1 to "Mainly Clear",
         2 to "Partly Cloudy",
