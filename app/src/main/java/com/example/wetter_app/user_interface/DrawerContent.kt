@@ -35,7 +35,7 @@ fun DrawerContent(navController: NavHostController, closeDrawer: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .background(Color.White)
+            .background(Color(0xFFE57373))
             .padding(16.dp)
     ) {
         Row(

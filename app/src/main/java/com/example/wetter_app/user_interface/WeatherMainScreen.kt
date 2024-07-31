@@ -155,9 +155,9 @@ fun WeatherMainScreen(
                     navigationIcon = {
                         IconButton(onClick = { openDrawer() }) {
                             Image(
-                                painter = painterResource(id = R.drawable.menu),
+                                painter = painterResource(id = R.drawable.settings),
                                 contentDescription = "Menu",
-                                Modifier.size(28.dp)
+                                Modifier.size(50.dp)
                             )
                         }
                     },
