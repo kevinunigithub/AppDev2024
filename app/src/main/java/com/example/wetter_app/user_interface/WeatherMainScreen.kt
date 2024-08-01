@@ -32,6 +32,7 @@ import com.example.wetter_app.weather_api.WeatherAPI
 import com.example.wetter_app.weather_api.hourly.HourlyWeatherHour
 import kotlinx.datetime.Clock
 import com.example.wetter_app.Logic.WeatherDataHandler
+import com.example.wetter_app.storage_api.SettingsManager
 import com.example.wetter_app.weather_api.daily.DailyWeatherDay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

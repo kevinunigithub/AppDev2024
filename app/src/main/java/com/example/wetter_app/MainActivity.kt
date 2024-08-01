@@ -8,6 +8,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
+import com.example.wetter_app.data.LocationModel
+import com.example.wetter_app.storage_api.SettingsManager
 import com.example.wetter_app.user_interface.NoInternetScreen
 import com.example.wetter_app.user_interface.WeatherApp
 
@@ -15,6 +17,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val isConnected = isInternetAvailable(this)
+        val settingsManager = SettingsManager(this)
+        settingsManager.initialize()
+        LocationModel.initialize(settingsManager)
 
         setContent {
             MaterialTheme {
